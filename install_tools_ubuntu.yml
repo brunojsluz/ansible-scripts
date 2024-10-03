@@ -1,0 +1,122 @@
+---
+- hosts: localhost
+  become: true
+
+  tasks:
+    - name: Atualizar os pacotes apt
+      apt:
+        update_cache: yes
+
+    - name: Instalar dependências básicas
+      apt:
+        name: 
+          - curl
+          - wget
+          - unzip
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - libfuse2  # Adiciona o pacote libfuse2 para libfuse.so.2
+        state: present
+
+    - name: Baixar o pacote gconf2-common
+      get_url:
+        url: http://mirrors.kernel.org/ubuntu/pool/universe/g/gconf/gconf2-common_3.2.6-7ubuntu2_all.deb
+        dest: /tmp/gconf2-common.deb
+
+    - name: Instalar o pacote gconf2-common
+      apt:
+        deb: /tmp/gconf2-common.deb
+
+    - name: Baixar o pacote libgconf-2-4
+      get_url:
+        url: http://mirrors.kernel.org/ubuntu/pool/universe/g/gconf/libgconf-2-4_3.2.6-7ubuntu2_amd64.deb
+        dest: /tmp/libgconf-2-4.deb
+
+    - name: Instalar o pacote libgconf-2-4
+      apt:
+        deb: /tmp/libgconf-2-4.deb
+
+    - name: Adicionar o repositório do Google Chrome
+      apt_key:
+        url: https://dl.google.com/linux/linux_signing_key.pub
+        state: present
+
+    - name: Adicionar o repositório do Google Chrome à lista de fontes
+      apt_repository:
+        repo: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+        state: present
+
+    - name: Instalar Google Chrome
+      apt:
+        name: google-chrome-stable
+        state: present
+
+    - name: Adicionar o repositório do Sublime Text 4
+      apt_key:
+        url: https://download.sublimetext.com/sublimehq-pub.gpg
+        state: present
+
+    - name: Adicionar o repositório Sublime Text 4 à lista de fontes
+      apt_repository:
+        repo: "deb https://download.sublimetext.com/ apt/stable/"
+        state: present
+
+    - name: Instalar Sublime Text 4
+      apt:
+        name: sublime-text
+        state: present
+
+    - name: Baixar o JetBrains Toolbox
+      get_url:
+        url: https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.28.1.15219.tar.gz
+        dest: /tmp/jetbrains-toolbox.tar.gz
+
+    - name: Criar diretório para JetBrains Toolbox
+      file:
+        path: /opt/jetbrains-toolbox
+        state: directory
+        mode: '0755'
+
+    - name: Extrair JetBrains Toolbox
+      unarchive:
+        src: /tmp/jetbrains-toolbox.tar.gz
+        dest: /tmp/jetbrains-toolbox
+        remote_src: yes
+        creates: /tmp/jetbrains-toolbox/jetbrains-toolbox
+
+    - name: Instalar o SDKMAN!
+      shell: curl -s "https://get.sdkman.io" | bash
+      args:
+        creates: /home/{{ ansible_user_id }}/.sdkman
+
+    - name: Baixar o MongoDB Compass
+      get_url:
+        url: https://downloads.mongodb.com/compass/mongodb-compass_1.36.4_amd64.deb
+        dest: /tmp/mongodb-compass.deb
+
+    - name: Instalar o MongoDB Compass
+      apt:
+        deb: /tmp/mongodb-compass.deb
+
+    - name: Instalar o Mockoon
+      snap:
+        name: mockoon
+        state: present
+
+    - name: Instalar o Postman
+      snap:
+        name: postman
+        state: present
+
+    - name: Instalar o Visual Studio Code
+      snap:
+        name: code
+        classic: true
+        state: present
+
+    - name: Instalar o Git
+      apt:
+        name: git
+        state: present
