@@ -1,0 +1,145 @@
+---
+- hosts: localhost
+  become: true  # Isso garante que o sudo seja utilizado
+
+  tasks:
+    - name: Atualizar os pacotes dnf
+      dnf:
+        update_cache: yes
+
+    - name: Instalar dependências básicas
+      dnf:
+        name: 
+          - curl
+          - wget
+          - unzip
+          - ca-certificates
+          - gnupg
+          - libfuse
+        state: present
+
+    # Visual Studio Code
+    - name: Adicionar repositório do Visual Studio Code
+      copy:
+        content: |
+          [code]
+          name=Visual Studio Code
+          baseurl=https://packages.microsoft.com/yumrepos/vscode
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+        dest: /etc/yum.repos.d/vscode.repo
+
+    - name: Adicionar chave GPG do Visual Studio Code
+      rpm_key:
+        state: present
+        key: https://packages.microsoft.com/keys/microsoft.asc
+
+    - name: Instalar Visual Studio Code
+      dnf:
+        name: code
+        state: present
+
+    # Brave Browser
+    - name: Adicionar repositório do Brave Browser
+      copy:
+        content: |
+          [brave-browser]
+          name=Brave Browser
+          baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+        dest: /etc/yum.repos.d/brave-browser.repo
+
+    - name: Adicionar chave GPG do Brave Browser
+      rpm_key:
+        state: present
+        key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+
+    - name: Instalar Brave Browser
+      dnf:
+        name: brave-browser
+        state: present
+
+    # Sublime Text 4
+    - name: Adicionar repositório do Sublime Text 4
+      copy:
+        content: |
+          [sublime-text]
+          name=Sublime Text - x86_64 - Stable
+          baseurl=https://download.sublimetext.com/rpm/stable/x86_64/
+          gpgcheck=1
+          gpgkey=https://download.sublimetext.com/sublimehq-rpm-pub.gpg
+          enabled=1
+        dest: /etc/yum.repos.d/sublime-text.repo
+
+    - name: Instalar Sublime Text 4
+      dnf:
+        name: sublime-text
+        state: present
+
+    # SDKMAN!
+    - name: Instalar o SDKMAN!
+      shell: curl -s "https://get.sdkman.io" | bash
+      args:
+        creates: /home/{{ ansible_user_id }}/.sdkman
+
+    # MongoDB Compass
+    - name: Baixar MongoDB Compass
+      get_url:
+        url: https://downloads.mongodb.com/compass/mongodb-compass-1.36.4.x86_64.rpm
+        dest: /tmp/mongodb-compass.rpm
+
+    - name: Instalar MongoDB Compass
+      dnf:
+        name: /tmp/mongodb-compass.rpm
+        state: present
+        disable_gpg_check: true  # Ignora a verificação de assinatura GPG
+
+    # Mockoon
+    - name: Baixar Mockoon RPM
+      get_url:
+        url: https://github.com/mockoon/mockoon/releases/download/v8.4.0/mockoon-8.4.0.x86_64.rpm
+        dest: /tmp/mockoon-8.4.0.x86_64.rpm
+
+    - name: Instalar Mockoon
+      dnf:
+        name: /tmp/mockoon-8.4.0.x86_64.rpm
+        state: present
+        disable_gpg_check: true  # Ignora a verificação de assinatura GPG
+
+    # Postman
+    - name: Baixar Postman
+      get_url:
+        url: https://dl.pstmn.io/download/latest/linux64
+        dest: /opt/postman.tar.gz
+
+    - name: Descompactar Postman
+      unarchive:
+        src: /opt/postman.tar.gz
+        dest: /opt/
+        remote_src: yes
+
+    - name: Criar link simbólico para Postman
+      file:
+        src: /opt/Postman/Postman
+        dest: /usr/local/bin/postman
+        state: link
+
+    # JetBrains Toolbox
+    - name: Baixar JetBrains Toolbox
+      get_url:
+        url: https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.28.1.15219.tar.gz
+        dest: /tmp/jetbrains-toolbox.tar.gz
+
+    - name: Descompactar JetBrains Toolbox
+      unarchive:
+        src: /tmp/jetbrains-toolbox.tar.gz
+        dest: /opt/
+        remote_src: yes
+
+    - name: Executar JetBrains Toolbox
+      shell: /opt/jetbrains-toolbox*/jetbrains-toolbox
+      args:
+        creates: /home/{{ ansible_user_id }}/.local/share/JetBrains/Toolbox
